@@ -30,11 +30,14 @@ namespace CrystalRun
 
         #endregion
 
+        public float BobAmplitude => bobAmplitude;
+        public float BobFrequency => bobFrequency;
+
         protected Collider itemCollider;
         protected Vector3 initialLocalPosition;
         protected bool isCollected = false;
 
-        private float bobRandomOffset;
+        private Renderer cachedRenderer;
 
         protected virtual void Reset()
         {
@@ -53,29 +56,24 @@ namespace CrystalRun
                 itemCollider.isTrigger = true;
             }
 
+            cachedRenderer = GetComponent<Renderer>();
             initialLocalPosition = transform.localPosition;
-            // Tạo offset ngẫu nhiên để các vật phẩm gần nhau không bị nhấp nhô đồng loạt
-            bobRandomOffset = UnityEngine.Random.Range(0f, Mathf.PI * 2f);
         }
 
         protected virtual void Update()
         {
             if (isCollected) return;
+            if (cachedRenderer != null && !cachedRenderer.isVisible) return;
 
             AnimateVisual();
         }
 
         /// <summary>
-        /// Thực thi hiệu ứng xoay tròn và nhấp nhô nhẹ.
+        /// Thực thi hiệu ứng xoay tròn nhẹ khi vật phẩm nằm trong tầm nhìn camera (tránh dịch chuyển Static Collider mỗi frame gây lag vật lý).
         /// </summary>
         protected virtual void AnimateVisual()
         {
-            // 1. Tự xoay quanh trục Y
             transform.Rotate(Vector3.up, rotationSpeed * Time.deltaTime, Space.World);
-
-            // 2. Nhấp nhô hình sin quanh vị trí Y ban đầu
-            float newY = initialLocalPosition.y + Mathf.Sin((Time.time * bobFrequency) + bobRandomOffset) * bobAmplitude;
-            transform.localPosition = new Vector3(initialLocalPosition.x, newY, initialLocalPosition.z);
         }
 
         protected virtual void OnTriggerEnter(Collider other)

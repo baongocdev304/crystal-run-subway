@@ -217,16 +217,30 @@ namespace CrystalRun.UI
 
         #region Cập nhật HUD & Dữ liệu
 
+        private int lastScore = -1;
+        private int lastMeters = -1;
+        private int lastCoins = -1;
+        private int lastLives = -1;
+        private int lastCrystalCurr = -1;
+        private int lastCrystalTarget = -1;
+        private int lastShieldSec = -1;
+        private int lastMagnetSec = -1;
+        private int lastDoubleSec = -1;
+
         private void HandleScoreChanged(int score)
         {
+            if (score == lastScore) return;
+            lastScore = score;
             if (scoreText != null)
             {
-                scoreText.text = $"{score:N0}";
+                scoreText.text = score.ToString("D6");
             }
         }
 
         private void HandleDistanceChanged(int meters)
         {
+            if (meters == lastMeters) return;
+            lastMeters = meters;
             if (distanceText != null)
             {
                 distanceText.text = $"{meters}m";
@@ -235,6 +249,8 @@ namespace CrystalRun.UI
 
         private void HandleCoinsChanged(int coins)
         {
+            if (coins == lastCoins) return;
+            lastCoins = coins;
             if (coinsText != null)
             {
                 coinsText.text = $"{coins}";
@@ -243,14 +259,19 @@ namespace CrystalRun.UI
 
         private void HandleLivesChanged(int lives)
         {
+            if (lives == lastLives) return;
+            lastLives = lives;
             if (livesText != null)
             {
-                livesText.text = $"Mạng: {lives}";
+                livesText.text = $"MANG: {lives}";
             }
         }
 
         private void HandleCrystalProgressChanged(int current, int target)
         {
+            if (current == lastCrystalCurr && target == lastCrystalTarget) return;
+            lastCrystalCurr = current;
+            lastCrystalTarget = target;
             if (crystalsText != null)
             {
                 crystalsText.text = $"{current}/{target}";
@@ -261,11 +282,11 @@ namespace CrystalRun.UI
         {
             if (menuHighScoreText != null)
             {
-                menuHighScoreText.text = $"Kỷ lục: {highScore:N0}";
+                menuHighScoreText.text = $"TOP RUN: {highScore:N0}";
             }
             if (gameOverHighScoreText != null)
             {
-                gameOverHighScoreText.text = $"Kỷ lục: {highScore:N0}";
+                gameOverHighScoreText.text = $"TOP RUN: {highScore:N0}";
             }
         }
 
@@ -275,6 +296,7 @@ namespace CrystalRun.UI
 
         private void HandlePowerUpStarted(PowerUpType type, float duration)
         {
+            ResetPowerUpCache(type);
             SetPowerUpRootActive(type, true);
             UpdatePowerUpTime(type, duration);
         }
@@ -286,7 +308,18 @@ namespace CrystalRun.UI
 
         private void HandlePowerUpEnded(PowerUpType type)
         {
+            ResetPowerUpCache(type);
             SetPowerUpRootActive(type, false);
+        }
+
+        private void ResetPowerUpCache(PowerUpType type)
+        {
+            switch (type)
+            {
+                case PowerUpType.Shield: lastShieldSec = -1; break;
+                case PowerUpType.Magnet: lastMagnetSec = -1; break;
+                case PowerUpType.DoubleScore: lastDoubleSec = -1; break;
+            }
         }
 
         private void SetPowerUpRootActive(PowerUpType type, bool active)
@@ -307,17 +340,23 @@ namespace CrystalRun.UI
 
         private void UpdatePowerUpTime(PowerUpType type, float remaining)
         {
-            string timeStr = $"{Mathf.CeilToInt(remaining)}s";
+            int sec = Mathf.CeilToInt(remaining);
             switch (type)
             {
                 case PowerUpType.Shield:
-                    if (shieldTimerText != null) shieldTimerText.text = $"Khiên: {timeStr}";
+                    if (sec == lastShieldSec) return;
+                    lastShieldSec = sec;
+                    if (shieldTimerText != null) shieldTimerText.text = $"VAN TRUOT: {sec}s";
                     break;
                 case PowerUpType.Magnet:
-                    if (magnetTimerText != null) magnetTimerText.text = $"Nam châm: {timeStr}";
+                    if (sec == lastMagnetSec) return;
+                    lastMagnetSec = sec;
+                    if (magnetTimerText != null) magnetTimerText.text = $"NAM CHAM: {sec}s";
                     break;
                 case PowerUpType.DoubleScore:
-                    if (doubleScoreTimerText != null) doubleScoreTimerText.text = $"x2 Điểm: {timeStr}";
+                    if (sec == lastDoubleSec) return;
+                    lastDoubleSec = sec;
+                    if (doubleScoreTimerText != null) doubleScoreTimerText.text = $"x2 DIEM: {sec}s";
                     break;
             }
         }

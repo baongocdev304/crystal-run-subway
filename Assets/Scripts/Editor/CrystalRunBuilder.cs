@@ -283,6 +283,7 @@ namespace CrystalRun.Editor
                 mat.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
             }
 
+            mat.enableInstancing = true;
             EditorUtility.SetDirty(mat);
             return mat;
         }
@@ -401,6 +402,7 @@ namespace CrystalRun.Editor
             if (mr != null && mat != null)
             {
                 mr.sharedMaterial = mat;
+                mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             }
 
             Collider col = part.GetComponent<Collider>();
@@ -850,7 +852,11 @@ namespace CrystalRun.Editor
             RollingBoulder boulder = go.AddComponent<RollingBoulder>();
             boulder.Configure(2.5f, 2.5f, 0.95f, 38.0f);
 
-            Obstacle obs = go.AddComponent<Obstacle>();
+            Obstacle obs = go.GetComponent<Obstacle>();
+            if (obs == null)
+            {
+                obs = go.AddComponent<Obstacle>();
+            }
             obs.Configure(ObstacleType.RollingBoulder, 1);
 
             string path = "Assets/Prefabs/Obstacle_Boulder.prefab";
@@ -920,15 +926,15 @@ namespace CrystalRun.Editor
                     new Vector3(lx - 0.45f, 0.06f, 15f), new Vector3(0.10f, 0.12f, 30f), mats["SteelRail"]);
                 CreateVisualPart(PrimitiveType.Cube, $"Rail_R_{l}", railsContainer.transform,
                     new Vector3(lx + 0.45f, 0.06f, 15f), new Vector3(0.10f, 0.12f, 30f), mats["SteelRail"]);
+            }
 
-                // Các thanh tà vẹt gỗ cách đều mỗi 2.0m
-                for (float z = 1.0f; z < 30.0f; z += 2.0f)
-                {
-                    if (hasPit && z >= pitStart && z <= pitStart + pitLength) continue;
+            // Gộp tà vẹt gỗ ngang qua 3 làn mỗi 3.0m để giảm 75% số lượng GameObject & Draw Call
+            for (float z = 1.5f; z < 30.0f; z += 3.0f)
+            {
+                if (hasPit && z >= pitStart && z <= pitStart + pitLength) continue;
 
-                    CreateVisualPart(PrimitiveType.Cube, $"Tie_{l}_{z}", railsContainer.transform,
-                        new Vector3(lx, 0.01f, z), new Vector3(1.75f, 0.06f, 0.32f), mats["WoodTie"]);
-                }
+                CreateVisualPart(PrimitiveType.Cube, $"Tie_{z}", railsContainer.transform,
+                    new Vector3(0f, 0.01f, z), new Vector3(7.2f, 0.06f, 0.34f), mats["WoodTie"]);
             }
 
             // 3. Tường gạch chắn hai bên hành lang (X = ±4.4m) kèm dải đèn Neon
@@ -1331,95 +1337,220 @@ namespace CrystalRun.Editor
 
         private static void BuildUIHierarchy(Transform canvasRoot, UIManager uiManager)
         {
-            // === 1. Main Menu Panel ===
-            RectTransform menuPanel = CreateUIPanel(canvasRoot, "MainMenuPanel", new Color(0.06f, 0.09f, 0.18f, 0.88f));
-            CreateUIText(menuPanel, "SubTitle", "TOKYO NEON SUBWAY EDITION", 24f, new Vector2(0.5f, 0.78f), new Vector2(0.5f, 0.78f), Vector2.zero, new Vector2(700, 45), TextAlignmentOptions.Center, HexColor("#00F0FF"));
-            CreateUIText(menuPanel, "TitleText", "CHẠY ĐUA TINH THỂ", 58f, new Vector2(0.5f, 0.70f), new Vector2(0.5f, 0.70f), Vector2.zero, new Vector2(900, 100), TextAlignmentOptions.Center, HexColor("#FFD700"));
-            TMP_Text menuHighScore = CreateUIText(menuPanel, "HighScoreText", "Kỷ lục: 0", 30f, new Vector2(0.5f, 0.56f), new Vector2(0.5f, 0.56f), Vector2.zero, new Vector2(500, 60), TextAlignmentOptions.Center, Color.white);
-            Button startBtn = CreateUIButton(menuPanel, "StartButton", "BẮT ĐẦU CHẠY", new Vector2(0.5f, 0.41f), new Vector2(0.5f, 0.41f), Vector2.zero, new Vector2(340, 74), HexColor("#FF7A00"), Color.white);
-            Button quitBtn = CreateUIButton(menuPanel, "QuitButton", "THOÁT GAME", new Vector2(0.5f, 0.28f), new Vector2(0.5f, 0.28f), Vector2.zero, new Vector2(280, 62), HexColor("#D9383A"), Color.white);
+            // === 1. Main Menu Panel (Subway Surfers Arcade Style) ===
+            RectTransform menuPanel = CreateUIPanel(canvasRoot, "MainMenuPanel", new Color(0.04f, 0.06f, 0.14f, 0.72f));
+
+            // Khung Hero Card trung tâm có viền Vàng - Hồng Neon
+            RectTransform heroCard = CreateStyledBadge(menuPanel, "HeroCard",
+                new Vector2(0.5f, 0.54f), new Vector2(0.5f, 0.54f), Vector2.zero, new Vector2(780, 520),
+                new Color(0.06f, 0.10f, 0.22f, 0.94f), HexColor("#FFD700"), 6f);
+
+            RectTransform tourBadge = CreateStyledBadge(heroCard, "WorldTourBadge",
+                new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0, -48), new Vector2(460, 48),
+                HexColor("#FF2A85"), HexColor("#FFF4D6"), 3f);
+            CreateUIText(tourBadge, "SubTitle", "WORLD TOUR : TOKYO NIGHT NEON", 22f, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero, TextAlignmentOptions.Center, Color.white);
+
+            // Chữ bóng đổ (Drop Shadow) + Chữ chính kiểu Subway Surfers
+            CreateUIText(heroCard, "TitleShadow", "SUBWAY SURFERS\nCRYSTAL RUN", 52f, new Vector2(0.5f, 0.72f), new Vector2(0.5f, 0.72f), new Vector2(4, -4), new Vector2(720, 140), TextAlignmentOptions.Center, HexColor("#120824"));
+            CreateUIText(heroCard, "TitleText", "SUBWAY SURFERS\nCRYSTAL RUN", 52f, new Vector2(0.5f, 0.72f), new Vector2(0.5f, 0.72f), Vector2.zero, new Vector2(720, 140), TextAlignmentOptions.Center, HexColor("#FFD700"));
+
+            // Huy hiệu Kỷ lục (TOP RUN Badge)
+            RectTransform recordBadge = CreateStyledBadge(heroCard, "RecordBadge",
+                new Vector2(0.5f, 0.46f), new Vector2(0.5f, 0.46f), Vector2.zero, new Vector2(420, 62),
+                new Color(0.03f, 0.06f, 0.15f, 0.95f), HexColor("#00F0FF"), 3f);
+            TMP_Text menuHighScore = CreateUIText(recordBadge, "HighScoreText", "KỶ LỤC: 0", 28f, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero, TextAlignmentOptions.Center, HexColor("#00F0FF"));
+
+            CreateUIText(heroCard, "ControlsHint", "VUỐT MÀN HÌNH HOẶC PHÍM A/D/W/S ĐỂ NÉ TÀU & SĂN XU", 18f, new Vector2(0.5f, 0.32f), new Vector2(0.5f, 0.32f), Vector2.zero, new Vector2(680, 36), TextAlignmentOptions.Center, HexColor("#FFE8C2"));
+
+            Button startBtn = CreateArcadeButton(heroCard, "StartButton", "CHẠM ĐỂ CHẠY NGAY!", new Vector2(0.5f, 0.16f), new Vector2(0.5f, 0.16f), new Vector2(-115, 0), new Vector2(360, 74), HexColor("#00C853"), HexColor("#FFD700"), Color.white, 26f);
+            Button quitBtn = CreateArcadeButton(heroCard, "QuitButton", "THOÁT", new Vector2(0.5f, 0.16f), new Vector2(0.5f, 0.16f), new Vector2(205, 0), new Vector2(210, 74), HexColor("#D9383A"), HexColor("#FFF4D6"), Color.white, 24f);
             uiManager.ConfigureMainMenu(menuHighScore, startBtn, quitBtn);
 
-            // === 2. HUD Panel (Subway Surfers Arcade Style) ===
+            // === 2. HUD Panel (Chuẩn bố cục Subway Surfers) ===
             RectTransform hud = CreateUIPanel(canvasRoot, "HUDPanel", Color.clear);
+            hud.GetComponent<Image>().raycastTarget = false;
 
-            // Khung điểm bên trái
-            RectTransform scoreBadge = CreateUIPanel(hud, "ScoreBadge", new Color(0.08f, 0.14f, 0.28f, 0.78f));
-            scoreBadge.anchorMin = new Vector2(0f, 1f);
-            scoreBadge.anchorMax = new Vector2(0f, 1f);
-            scoreBadge.anchoredPosition = new Vector2(180f, -75f);
-            scoreBadge.sizeDelta = new Vector2(310f, 110f);
+            // Nút Tạm dừng góc trên bên trái (kiểu Subway Surfers Blue Square Button)
+            Button pauseBtn = CreateArcadeButton(hud, "PauseButton", "||", new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(56, -54), new Vector2(68, 68), HexColor("#1D63B8"), HexColor("#00F0FF"), Color.white, 28f);
 
-            TMP_Text scoreText = CreateUIText(hud, "ScoreText", "0", 44f, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(180, -58), new Vector2(280, 60), TextAlignmentOptions.Left, HexColor("#FFD700"));
-            TMP_Text distText = CreateUIText(hud, "DistanceText", "0m", 25f, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(180, -104), new Vector2(280, 40), TextAlignmentOptions.Left, HexColor("#8FD3FF"));
+            // Cụm Điểm số & Quãng đường góc trên bên phải (6 chữ số 000000 giống Subway Surfers)
+            RectTransform scoreBadge = CreateStyledBadge(hud, "ScoreBadge",
+                new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-190f, -52f), new Vector2(330f, 68f),
+                new Color(0.05f, 0.09f, 0.22f, 0.90f), HexColor("#FFD700"), 3f);
+            CreateUIText(scoreBadge, "StarTag", "ĐIỂM", 18f, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(46, 0), new Vector2(70, 40), TextAlignmentOptions.Left, HexColor("#00F0FF"));
+            TMP_Text scoreText = CreateUIText(scoreBadge, "ScoreText", "000000", 38f, new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(-120, 0), new Vector2(210, 54), TextAlignmentOptions.Right, HexColor("#FFD700"));
 
-            // Khung thông số Xu, Tinh thể & Mạng bên phải
-            RectTransform statsBadge = CreateUIPanel(hud, "StatsBadge", new Color(0.08f, 0.14f, 0.28f, 0.78f));
-            statsBadge.anchorMin = new Vector2(1f, 1f);
-            statsBadge.anchorMax = new Vector2(1f, 1f);
-            statsBadge.anchoredPosition = new Vector2(-175f, -95f);
-            statsBadge.sizeDelta = new Vector2(290f, 148f);
+            RectTransform distBadge = CreateStyledBadge(hud, "DistBadge",
+                new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-125f, -110f), new Vector2(200f, 40f),
+                new Color(0.05f, 0.09f, 0.22f, 0.85f), HexColor("#00F0FF"), 2f);
+            TMP_Text distText = CreateUIText(distBadge, "DistanceText", "0 m", 22f, Vector2.zero, Vector2.one, new Vector2(-10, 0), Vector2.zero, TextAlignmentOptions.Right, HexColor("#8FD3FF"));
 
-            TMP_Text coinsText = CreateUIText(hud, "CoinsText", "XU: 0", 30f, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-175, -50), new Vector2(250, 48), TextAlignmentOptions.Right, HexColor("#FFD700"));
-            TMP_Text crystalsText = CreateUIText(hud, "CrystalsText", "0/10", 26f, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-175, -94), new Vector2(250, 40), TextAlignmentOptions.Right, HexColor("#00F0FF"));
-            TMP_Text livesText = CreateUIText(hud, "LivesText", "Mạng: 3", 28f, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-175, -138), new Vector2(250, 40), TextAlignmentOptions.Right, HexColor("#FF4D6D"));
+            // Cụm Xu Vàng, Tinh Thể & Mạng bên trái (dưới nút Pause)
+            RectTransform coinPill = CreateStyledBadge(hud, "CoinPill",
+                new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(138f, -118f), new Vector2(230f, 46f),
+                new Color(0.05f, 0.09f, 0.22f, 0.88f), HexColor("#FFD700"), 3f);
+            TMP_Text coinsText = CreateUIText(coinPill, "CoinsText", "XU: 0", 24f, Vector2.zero, Vector2.one, new Vector2(12, 0), new Vector2(-24, 0), TextAlignmentOptions.Left, HexColor("#FFD700"));
 
-            Button pauseBtn = CreateUIButton(hud, "PauseButton", "|| TẠM DỪNG", new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0, -52), new Vector2(200, 52), HexColor("#1D63B8"), Color.white);
+            RectTransform crystalPill = CreateStyledBadge(hud, "CrystalPill",
+                new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(138f, -172f), new Vector2(230f, 44f),
+                new Color(0.05f, 0.09f, 0.22f, 0.88f), HexColor("#00F0FF"), 2f);
+            TMP_Text crystalsText = CreateUIText(crystalPill, "CrystalsText", "TINH THỂ: 0/10", 21f, Vector2.zero, Vector2.one, new Vector2(12, 0), new Vector2(-24, 0), TextAlignmentOptions.Left, HexColor("#00F0FF"));
 
-            // Thanh đếm ngược Power-Up dưới đáy màn hình
+            RectTransform livesPill = CreateStyledBadge(hud, "LivesPill",
+                new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(138f, -224f), new Vector2(230f, 44f),
+                new Color(0.05f, 0.09f, 0.22f, 0.88f), HexColor("#FF2A85"), 2f);
+            TMP_Text livesText = CreateUIText(livesPill, "LivesText", "MẠNG: 3", 22f, Vector2.zero, Vector2.one, new Vector2(12, 0), new Vector2(-24, 0), TextAlignmentOptions.Left, HexColor("#FF4D6D"));
+
+            // Thanh đếm ngược Power-Up (Hoverboard / Jetpack / Sneaker) dưới đáy màn hình
             RectTransform buffContainer = CreateUIPanel(hud, "BuffContainer", Color.clear);
+            buffContainer.GetComponent<Image>().raycastTarget = false;
             buffContainer.anchorMin = new Vector2(0.5f, 0f);
             buffContainer.anchorMax = new Vector2(0.5f, 0f);
-            buffContainer.anchoredPosition = new Vector2(0f, 62f);
-            buffContainer.sizeDelta = new Vector2(820, 52);
+            buffContainer.anchoredPosition = new Vector2(0f, 56f);
+            buffContainer.sizeDelta = new Vector2(820, 54);
 
-            RectTransform shieldBox = CreateUIPanel(buffContainer, "ShieldBuff", HexColor("#1D63B8"));
-            shieldBox.anchorMin = new Vector2(0.5f, 0.5f);
-            shieldBox.anchorMax = new Vector2(0.5f, 0.5f);
-            shieldBox.anchoredPosition = new Vector2(-230, 0);
-            shieldBox.sizeDelta = new Vector2(200, 44);
-            TMP_Text shieldTxt = CreateUIText(shieldBox, "Txt", "Ván trượt: 8s", 20f, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero, TextAlignmentOptions.Center, Color.white);
+            RectTransform shieldBox = CreateStyledBadge(buffContainer, "ShieldBuff",
+                new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(-245, 0), new Vector2(225, 48),
+                HexColor("#1D63B8"), HexColor("#00F0FF"), 3f);
+            TMP_Text shieldTxt = CreateUIText(shieldBox, "Txt", "VÁN TRƯỢT: 8s", 20f, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero, TextAlignmentOptions.Center, Color.white);
 
-            RectTransform magnetBox = CreateUIPanel(buffContainer, "MagnetBuff", HexColor("#E62E2D"));
-            magnetBox.anchorMin = new Vector2(0.5f, 0.5f);
-            magnetBox.anchorMax = new Vector2(0.5f, 0.5f);
-            magnetBox.anchoredPosition = new Vector2(0, 0);
-            magnetBox.sizeDelta = new Vector2(200, 44);
-            TMP_Text magnetTxt = CreateUIText(magnetBox, "Txt", "Nam châm: 8s", 20f, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero, TextAlignmentOptions.Center, Color.white);
+            RectTransform magnetBox = CreateStyledBadge(buffContainer, "MagnetBuff",
+                new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0, 0), new Vector2(225, 48),
+                HexColor("#E62E2D"), HexColor("#FFD700"), 3f);
+            TMP_Text magnetTxt = CreateUIText(magnetBox, "Txt", "NAM CHÂM: 8s", 20f, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero, TextAlignmentOptions.Center, Color.white);
 
-            RectTransform doubleBox = CreateUIPanel(buffContainer, "DoubleScoreBuff", HexColor("#8E2DE2"));
-            doubleBox.anchorMin = new Vector2(0.5f, 0.5f);
-            doubleBox.anchorMax = new Vector2(0.5f, 0.5f);
-            doubleBox.anchoredPosition = new Vector2(230, 0);
-            doubleBox.sizeDelta = new Vector2(200, 44);
-            TMP_Text doubleTxt = CreateUIText(doubleBox, "Txt", "x2 Điểm: 10s", 20f, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero, TextAlignmentOptions.Center, Color.white);
+            RectTransform doubleBox = CreateStyledBadge(buffContainer, "DoubleScoreBuff",
+                new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(245, 0), new Vector2(225, 48),
+                HexColor("#8E2DE2"), HexColor("#FF2A85"), 3f);
+            TMP_Text doubleTxt = CreateUIText(doubleBox, "Txt", "X2 SAO: 10s", 20f, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero, TextAlignmentOptions.Center, Color.white);
 
             uiManager.ConfigureHUD(scoreText, distText, coinsText, livesText, crystalsText, pauseBtn,
                 shieldBox.gameObject, shieldTxt, magnetBox.gameObject, magnetTxt, doubleBox.gameObject, doubleTxt);
 
             // === 3. Pause Panel ===
-            RectTransform pause = CreateUIPanel(canvasRoot, "PausePanel", new Color(0.04f, 0.06f, 0.14f, 0.85f));
-            CreateUIText(pause, "PauseTitle", "TẠM DỪNG", 50f, new Vector2(0.5f, 0.66f), new Vector2(0.5f, 0.66f), Vector2.zero, new Vector2(450, 80), TextAlignmentOptions.Center, HexColor("#FFD700"));
-            Button resumeBtn = CreateUIButton(pause, "ResumeButton", "TIẾP TỤC CHẠY", new Vector2(0.5f, 0.51f), new Vector2(0.5f, 0.51f), Vector2.zero, new Vector2(280, 62), HexColor("#2A9D8F"), Color.white);
-            Button pauseRestartBtn = CreateUIButton(pause, "RestartButton", "CHƠI LẠI", new Vector2(0.5f, 0.40f), new Vector2(0.5f, 0.40f), Vector2.zero, new Vector2(280, 62), HexColor("#FF7A00"), Color.white);
-            Button pauseQuitBtn = CreateUIButton(pause, "QuitButton", "THOÁT", new Vector2(0.5f, 0.29f), new Vector2(0.5f, 0.29f), Vector2.zero, new Vector2(280, 62), HexColor("#D9383A"), Color.white);
+            RectTransform pause = CreateUIPanel(canvasRoot, "PausePanel", new Color(0.03f, 0.05f, 0.12f, 0.84f));
+            RectTransform pauseCard = CreateStyledBadge(pause, "PauseCard",
+                new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(520, 430),
+                new Color(0.06f, 0.11f, 0.24f, 0.96f), HexColor("#00F0FF"), 5f);
+
+            CreateUIText(pauseCard, "PauseTitle", "TẠM DỪNG CUỘC ĐUA", 40f, new Vector2(0.5f, 0.80f), new Vector2(0.5f, 0.80f), Vector2.zero, new Vector2(460, 70), TextAlignmentOptions.Center, HexColor("#FFD700"));
+            Button resumeBtn = CreateArcadeButton(pauseCard, "ResumeButton", "TIẾP TỤC CHẠY", new Vector2(0.5f, 0.56f), new Vector2(0.5f, 0.56f), Vector2.zero, new Vector2(320, 66), HexColor("#00C853"), HexColor("#FFD700"), Color.white, 24f);
+            Button pauseRestartBtn = CreateArcadeButton(pauseCard, "RestartButton", "CHƠI LẠI TỪ ĐẦU", new Vector2(0.5f, 0.37f), new Vector2(0.5f, 0.37f), Vector2.zero, new Vector2(320, 62), HexColor("#FF7A00"), HexColor("#FFF4D6"), Color.white, 23f);
+            Button pauseQuitBtn = CreateArcadeButton(pauseCard, "QuitButton", "THOÁT GAME", new Vector2(0.5f, 0.18f), new Vector2(0.5f, 0.18f), Vector2.zero, new Vector2(320, 60), HexColor("#D9383A"), HexColor("#FFF4D6"), Color.white, 22f);
             uiManager.ConfigurePause(resumeBtn, pauseRestartBtn, pauseQuitBtn);
 
-            // === 4. Game Over Panel ===
-            RectTransform gameOver = CreateUIPanel(canvasRoot, "GameOverPanel", new Color(0.08f, 0.05f, 0.15f, 0.94f));
-            CreateUIText(gameOver, "OverTitle", "KẾT THÚC LƯỢT CHẠY", 54f, new Vector2(0.5f, 0.76f), new Vector2(0.5f, 0.76f), Vector2.zero, new Vector2(700, 90), TextAlignmentOptions.Center, HexColor("#FF2A85"));
-            GameObject newRecordObj = CreateUIText(gameOver, "NewRecordNotice", "★ KỶ LỤC MỚI TOKYO! ★", 32f, new Vector2(0.5f, 0.67f), new Vector2(0.5f, 0.67f), Vector2.zero, new Vector2(500, 50), TextAlignmentOptions.Center, HexColor("#FFD700")).gameObject;
+            // === 4. Game Over Panel (Subway Surfers Scoreboard Card) ===
+            RectTransform gameOver = CreateUIPanel(canvasRoot, "GameOverPanel", new Color(0.04f, 0.04f, 0.12f, 0.88f));
+            RectTransform overCard = CreateStyledBadge(gameOver, "GameOverCard",
+                new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(680, 540),
+                new Color(0.07f, 0.10f, 0.23f, 0.96f), HexColor("#FF2A85"), 5f);
 
-            TMP_Text finalScore = CreateUIText(gameOver, "FinalScore", "Điểm: 0", 34f, new Vector2(0.5f, 0.58f), new Vector2(0.5f, 0.58f), Vector2.zero, new Vector2(520, 50), TextAlignmentOptions.Center, Color.white);
-            TMP_Text finalDist = CreateUIText(gameOver, "FinalDistance", "Quãng đường: 0m", 28f, new Vector2(0.5f, 0.51f), new Vector2(0.5f, 0.51f), Vector2.zero, new Vector2(520, 45), TextAlignmentOptions.Center, HexColor("#8FD3FF"));
-            TMP_Text finalCoins = CreateUIText(gameOver, "FinalCoins", "Xu thu thập: 0", 28f, new Vector2(0.5f, 0.44f), new Vector2(0.5f, 0.44f), Vector2.zero, new Vector2(520, 45), TextAlignmentOptions.Center, HexColor("#FFD700"));
-            TMP_Text overHighScore = CreateUIText(gameOver, "GameOverHighScore", "Kỷ lục: 0", 28f, new Vector2(0.5f, 0.37f), new Vector2(0.5f, 0.37f), Vector2.zero, new Vector2(520, 45), TextAlignmentOptions.Center, HexColor("#00F0FF"));
+            CreateUIText(overCard, "OverTitle", "BỊ BẮT RỒI!", 48f, new Vector2(0.5f, 0.85f), new Vector2(0.5f, 0.85f), Vector2.zero, new Vector2(600, 75), TextAlignmentOptions.Center, HexColor("#FFD700"));
+            GameObject newRecordObj = CreateUIText(overCard, "NewRecordNotice", "KỶ LỤC MỚI TOKYO!", 28f, new Vector2(0.5f, 0.74f), new Vector2(0.5f, 0.74f), Vector2.zero, new Vector2(500, 44), TextAlignmentOptions.Center, HexColor("#00F0FF")).gameObject;
 
-            Button overRestartBtn = CreateUIButton(gameOver, "RestartButton", "CHƠI LẠI NGAY", new Vector2(0.5f, 0.25f), new Vector2(0.5f, 0.25f), Vector2.zero, new Vector2(310, 68), HexColor("#FF7A00"), Color.white);
-            Button overQuitBtn = CreateUIButton(gameOver, "QuitButton", "THOÁT", new Vector2(0.5f, 0.14f), new Vector2(0.5f, 0.14f), Vector2.zero, new Vector2(240, 54), HexColor("#D9383A"), Color.white);
+            RectTransform statsBox = CreateStyledBadge(overCard, "StatsBox",
+                new Vector2(0.5f, 0.49f), new Vector2(0.5f, 0.49f), Vector2.zero, new Vector2(560, 210),
+                new Color(0.03f, 0.06f, 0.15f, 0.92f), HexColor("#1D63B8"), 3f);
+
+            TMP_Text finalScore = CreateUIText(statsBox, "FinalScore", "ĐIỂM SỐ: 0", 34f, new Vector2(0.5f, 0.78f), new Vector2(0.5f, 0.78f), Vector2.zero, new Vector2(500, 48), TextAlignmentOptions.Center, HexColor("#FFD700"));
+            TMP_Text finalDist = CreateUIText(statsBox, "FinalDistance", "QUÃNG ĐƯỜNG: 0m", 25f, new Vector2(0.5f, 0.54f), new Vector2(0.5f, 0.54f), Vector2.zero, new Vector2(500, 40), TextAlignmentOptions.Center, HexColor("#8FD3FF"));
+            TMP_Text finalCoins = CreateUIText(statsBox, "FinalCoins", "XU THU THẬP: 0", 25f, new Vector2(0.5f, 0.32f), new Vector2(0.5f, 0.32f), Vector2.zero, new Vector2(500, 40), TextAlignmentOptions.Center, HexColor("#FFC845"));
+            TMP_Text overHighScore = CreateUIText(statsBox, "GameOverHighScore", "KỶ LỤC: 0", 25f, new Vector2(0.5f, 0.12f), new Vector2(0.5f, 0.12f), Vector2.zero, new Vector2(500, 40), TextAlignmentOptions.Center, HexColor("#00F0FF"));
+
+            Button overRestartBtn = CreateArcadeButton(overCard, "RestartButton", "CHẠY LẠI NGAY!", new Vector2(0.5f, 0.15f), new Vector2(0.5f, 0.15f), new Vector2(-110, 0), new Vector2(330, 70), HexColor("#00C853"), HexColor("#FFD700"), Color.white, 26f);
+            Button overQuitBtn = CreateArcadeButton(overCard, "QuitButton", "THOÁT", new Vector2(0.5f, 0.15f), new Vector2(0.5f, 0.15f), new Vector2(185, 0), new Vector2(200, 70), HexColor("#D9383A"), HexColor("#FFF4D6"), Color.white, 23f);
             uiManager.ConfigureGameOver(finalScore, finalDist, finalCoins, overHighScore, newRecordObj, overRestartBtn, overQuitBtn);
 
             uiManager.ConfigurePanels(menuPanel.gameObject, hud.gameObject, pause.gameObject, gameOver.gameObject);
+        }
+
+        private static RectTransform CreateStyledBadge(
+            Transform parent,
+            string name,
+            Vector2 anchorMin,
+            Vector2 anchorMax,
+            Vector2 anchoredPos,
+            Vector2 sizeDelta,
+            Color innerColor,
+            Color borderColor,
+            float borderThickness)
+        {
+            GameObject borderGo = new GameObject(name, typeof(RectTransform), typeof(Image));
+            borderGo.transform.SetParent(parent, false);
+            RectTransform borderRt = borderGo.GetComponent<RectTransform>();
+            borderRt.anchorMin = anchorMin;
+            borderRt.anchorMax = anchorMax;
+            borderRt.anchoredPosition = anchoredPos;
+            borderRt.sizeDelta = sizeDelta;
+            Image borderImg = borderGo.GetComponent<Image>();
+            borderImg.color = borderColor;
+            borderImg.raycastTarget = false;
+
+            GameObject fillGo = new GameObject("Fill", typeof(RectTransform), typeof(Image));
+            fillGo.transform.SetParent(borderGo.transform, false);
+            RectTransform fillRt = fillGo.GetComponent<RectTransform>();
+            fillRt.anchorMin = Vector2.zero;
+            fillRt.anchorMax = Vector2.one;
+            fillRt.offsetMin = new Vector2(borderThickness, borderThickness);
+            fillRt.offsetMax = new Vector2(-borderThickness, -borderThickness);
+            Image fillImg = fillGo.GetComponent<Image>();
+            fillImg.color = innerColor;
+            fillImg.raycastTarget = false;
+
+            return borderRt;
+        }
+
+        private static Button CreateArcadeButton(
+            Transform parent,
+            string name,
+            string text,
+            Vector2 anchorMin,
+            Vector2 anchorMax,
+            Vector2 anchoredPos,
+            Vector2 sizeDelta,
+            Color btnColor,
+            Color borderColor,
+            Color textColor,
+            float fontSize)
+        {
+            GameObject borderGo = new GameObject(name, typeof(RectTransform), typeof(Image), typeof(Button));
+            borderGo.transform.SetParent(parent, false);
+            RectTransform rt = borderGo.GetComponent<RectTransform>();
+            rt.anchorMin = anchorMin;
+            rt.anchorMax = anchorMax;
+            rt.anchoredPosition = anchoredPos;
+            rt.sizeDelta = sizeDelta;
+            borderGo.GetComponent<Image>().color = borderColor;
+
+            GameObject fillGo = new GameObject("Fill", typeof(RectTransform), typeof(Image));
+            fillGo.transform.SetParent(borderGo.transform, false);
+            RectTransform fillRt = fillGo.GetComponent<RectTransform>();
+            fillRt.anchorMin = Vector2.zero;
+            fillRt.anchorMax = Vector2.one;
+            fillRt.offsetMin = new Vector2(3f, 5f);
+            fillRt.offsetMax = new Vector2(-3f, -3f);
+            Image fillImg = fillGo.GetComponent<Image>();
+            fillImg.color = btnColor;
+
+            Button btn = borderGo.GetComponent<Button>();
+            btn.targetGraphic = fillImg;
+
+            GameObject textGo = new GameObject("Text", typeof(RectTransform), typeof(TextMeshProUGUI));
+            textGo.transform.SetParent(fillGo.transform, false);
+            RectTransform textRt = textGo.GetComponent<RectTransform>();
+            textRt.anchorMin = Vector2.zero;
+            textRt.anchorMax = Vector2.one;
+            textRt.offsetMin = Vector2.zero;
+            textRt.offsetMax = Vector2.zero;
+            TextMeshProUGUI tmp = textGo.GetComponent<TextMeshProUGUI>();
+            tmp.text = text;
+            tmp.fontSize = fontSize;
+            tmp.fontStyle = FontStyles.Bold;
+            tmp.alignment = TextAlignmentOptions.Center;
+            tmp.color = textColor;
+            tmp.raycastTarget = false;
+
+            return btn;
         }
 
         private static RectTransform CreateUIPanel(Transform parent, string name, Color bgColor)
@@ -1460,6 +1591,7 @@ namespace CrystalRun.Editor
             tmp.fontStyle = FontStyles.Bold;
             tmp.alignment = alignment;
             tmp.color = color;
+            tmp.raycastTarget = false;
             return tmp;
         }
 
@@ -1474,31 +1606,7 @@ namespace CrystalRun.Editor
             Color btnColor,
             Color textColor)
         {
-            GameObject go = new GameObject(name, typeof(RectTransform), typeof(Image), typeof(Button));
-            go.transform.SetParent(parent, false);
-            RectTransform rt = go.GetComponent<RectTransform>();
-            rt.anchorMin = anchorMin;
-            rt.anchorMax = anchorMax;
-            rt.anchoredPosition = anchoredPos;
-            rt.sizeDelta = sizeDelta;
-            go.GetComponent<Image>().color = btnColor;
-            Button btn = go.GetComponent<Button>();
-
-            GameObject textGo = new GameObject("Text", typeof(RectTransform), typeof(TextMeshProUGUI));
-            textGo.transform.SetParent(go.transform, false);
-            RectTransform textRt = textGo.GetComponent<RectTransform>();
-            textRt.anchorMin = Vector2.zero;
-            textRt.anchorMax = Vector2.one;
-            textRt.offsetMin = Vector2.zero;
-            textRt.offsetMax = Vector2.zero;
-            TextMeshProUGUI tmp = textGo.GetComponent<TextMeshProUGUI>();
-            tmp.text = text;
-            tmp.fontSize = 23f;
-            tmp.fontStyle = FontStyles.Bold;
-            tmp.alignment = TextAlignmentOptions.Center;
-            tmp.color = textColor;
-
-            return btn;
+            return CreateArcadeButton(parent, name, text, anchorMin, anchorMax, anchoredPos, sizeDelta, btnColor, Color.white, textColor, 23f);
         }
 
         #endregion
@@ -1518,11 +1626,9 @@ namespace CrystalRun.Editor
         [MenuItem("Tools/Crystal Run/Build WebGL (For Render)", priority = 10)]
         public static void BuildWebGLForRender()
         {
+            // Luôn dựng lại toàn bộ Prefab, Material, UI & Scene mới nhất trước khi xuất bản WebGL
+            BuildAll();
             string scenePath = "Assets/Scenes/Main.unity";
-            if (!File.Exists(scenePath))
-            {
-                BuildAll();
-            }
 
             SetupBuildSettings();
 

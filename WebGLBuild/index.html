@@ -4,45 +4,303 @@
     <meta charset="utf-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=yes, viewport-fit=cover">
-    <title>Chạy Đua Tinh Thể | Tokyo Neon Subway</title>
+    <title>Subway Surfers: Crystal Run | World Tour Tokyo</title>
     <link rel="shortcut icon" href="TemplateData/favicon.ico">
     <link rel="stylesheet" href="TemplateData/style.css">
     <style>
+      * {
+        box-sizing: border-box;
+        -webkit-tap-highlight-color: transparent;
+      }
+
       html, body {
         margin: 0;
         padding: 0;
         width: 100%;
         height: 100%;
         overflow: hidden;
-        background: #0b1021;
+        background: #070b19;
         overscroll-behavior: none;
         touch-action: none;
         user-select: none;
         -webkit-user-select: none;
         -webkit-touch-callout: none;
+        font-family: "Trebuchet MS", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       }
 
-      /* Nút điều khiển cảm ứng dành cho điện thoại / máy tính bảng */
+      /* Khung chứa toàn màn hình không viền đen để tối ưu tốc độ ghép lớp GPU */
+      #unity-container,
+      #unity-fullscreen-container {
+        position: fixed !important;
+        inset: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #070b19;
+      }
+
+      #unity-canvas {
+        width: 100% !important;
+        height: 100% !important;
+        display: block;
+        background: #070b19;
+        touch-action: none;
+      }
+
+      #unity-footer,
+      #unity-loading-container {
+        display: none !important;
+      }
+
+      /* === THANH HEADER SUBWAY SURFERS ARCADE === */
+      #subway-top-bar {
+        position: fixed;
+        top: max(env(safe-area-inset-top, 8px), 8px);
+        left: 12px;
+        right: 12px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        pointer-events: none;
+        z-index: 9995;
+      }
+
+      .bar-group {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        pointer-events: auto;
+      }
+
+      .arcade-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px;
+        border-radius: 999px;
+        background: linear-gradient(180deg, #1b2f66 0%, #0d1736 100%);
+        border: 2.5px solid #ffd700;
+        box-shadow: 0 3px 0 #060b1c, 0 4px 10px rgba(0, 0, 0, 0.45);
+        color: #ffffff;
+        font-size: 12px;
+        font-weight: 900;
+        letter-spacing: 0.4px;
+        text-transform: uppercase;
+        cursor: pointer;
+        transition: transform 0.08s ease;
+      }
+
+      .arcade-pill:active {
+        transform: translateY(2px) scale(0.96);
+      }
+
+      .arcade-pill.tour-badge {
+        border-color: #ff2a85;
+        background: linear-gradient(180deg, #ff2a85 0%, #a3104e 100%);
+        cursor: default;
+      }
+
+      .arcade-pill.fps-pill {
+        border-color: #00f0ff;
+        color: #00f0ff;
+      }
+
+      .arcade-pill.pause-pill {
+        border-color: #ffd700;
+        background: linear-gradient(180deg, #ff9100 0%, #e65100 100%);
+        color: #fff;
+      }
+
+      /* === MÀN HÌNH LOADING & SẢNH CHỜ PHONG CÁCH SUBWAY SURFERS TOKYO === */
+      #subway-splash {
+        position: fixed;
+        inset: 0;
+        z-index: 10000;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        padding: 20px;
+        background:
+          radial-gradient(circle at 50% 22%, rgba(255, 42, 133, 0.32), transparent 55%),
+          radial-gradient(circle at 80% 78%, rgba(0, 240, 255, 0.25), transparent 50%),
+          linear-gradient(180deg, #0e1638 0%, #070b1c 100%);
+        transition: opacity 0.28s ease;
+      }
+
+      #subway-splash.hidden {
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .splash-card {
+        width: 100%;
+        max-width: 480px;
+        background: linear-gradient(180deg, #162556 0%, #0b132e 100%);
+        border: 4px solid #ffd700;
+        border-radius: 26px;
+        padding: 22px 20px;
+        text-align: center;
+        box-shadow: 0 10px 0 #050917, 0 18px 40px rgba(0, 0, 0, 0.7);
+        position: relative;
+      }
+
+      .world-tour-ribbon {
+        display: inline-block;
+        background: linear-gradient(90deg, #ff2a85, #ff7a00);
+        color: #ffffff;
+        font-size: 12px;
+        font-weight: 900;
+        letter-spacing: 1.2px;
+        padding: 5px 16px;
+        border-radius: 999px;
+        border: 2px solid #fff4d6;
+        margin-bottom: 10px;
+        box-shadow: 0 3px 0 rgba(0, 0, 0, 0.35);
+      }
+
+      .subway-logo-title {
+        margin: 0;
+        font-size: clamp(28px, 6vw, 40px);
+        font-weight: 900;
+        line-height: 1.05;
+        color: #ffd700;
+        text-transform: uppercase;
+        text-shadow:
+          0 3px 0 #b23a00,
+          0 6px 0 #060a17;
+        letter-spacing: 1px;
+      }
+
+      .subway-logo-sub {
+        margin: 4px 0 14px;
+        font-size: 15px;
+        font-weight: 800;
+        color: #00f0ff;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+      }
+
+      .feature-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+        margin: 12px 0 16px;
+        text-align: left;
+      }
+
+      .feature-item {
+        background: rgba(7, 13, 33, 0.78);
+        border: 1.5px solid rgba(0, 240, 255, 0.4);
+        border-radius: 12px;
+        padding: 8px 10px;
+        color: #e8f7ff;
+        font-size: 12px;
+        font-weight: 700;
+      }
+
+      .feature-item strong {
+        display: block;
+        color: #ffd700;
+        font-size: 12.5px;
+        margin-bottom: 2px;
+      }
+
+      .progress-shell {
+        width: 100%;
+        height: 24px;
+        background: #070c1d;
+        border: 3px solid #00f0ff;
+        border-radius: 999px;
+        overflow: hidden;
+        position: relative;
+        margin-bottom: 8px;
+      }
+
+      .progress-fill {
+        width: 8%;
+        height: 100%;
+        background: linear-gradient(90deg, #00e676 0%, #ffd700 55%, #ff2a85 100%);
+        border-radius: 999px;
+        transition: width 0.15s ease;
+      }
+
+      .progress-label {
+        font-size: 13px;
+        font-weight: 800;
+        color: #bfe9ff;
+        margin-bottom: 12px;
+      }
+
+      #play-now-btn {
+        display: none;
+        width: 100%;
+        padding: 14px 20px;
+        border-radius: 16px;
+        border: 3px solid #ffd700;
+        background: linear-gradient(180deg, #00e676 0%, #009944 100%);
+        color: #ffffff;
+        font-size: 20px;
+        font-weight: 900;
+        letter-spacing: 0.8px;
+        text-transform: uppercase;
+        text-shadow: 0 2px 0 rgba(0, 0, 0, 0.45);
+        box-shadow: 0 6px 0 #005b28, 0 10px 20px rgba(0, 230, 118, 0.35);
+        cursor: pointer;
+      }
+
+      #play-now-btn:active {
+        transform: translateY(3px);
+        box-shadow: 0 3px 0 #005b28;
+      }
+
+      /* === HIỆU ỨNG BÁO HƯỚNG VUỐT TRÊN MÀN HÌNH === */
+      #swipe-toast {
+        position: fixed;
+        top: 56px;
+        left: 50%;
+        transform: translateX(-50%) scale(0.85);
+        background: linear-gradient(180deg, #1b2f66 0%, #0c1636 100%);
+        border: 2.5px solid #00f0ff;
+        color: #ffd700;
+        padding: 5px 16px;
+        border-radius: 999px;
+        font-size: 13px;
+        font-weight: 900;
+        letter-spacing: 0.8px;
+        opacity: 0;
+        pointer-events: none;
+        z-index: 9996;
+        transition: opacity 0.14s ease, transform 0.14s ease;
+      }
+
+      #swipe-toast.show {
+        opacity: 1;
+        transform: translateX(-50%) scale(1);
+      }
+
+      /* === CỤM NÚT ĐIỀU KHIỂN ARCADE CHO ĐIỆN THOẠI (KHÔNG DÙNG BLUR ĐỂ CHỐNG LAG) === */
       #mobile-controls {
         display: none;
         position: fixed;
         left: 0;
         right: 0;
-        bottom: env(safe-area-inset-bottom, 14px);
-        padding: 0 18px 14px 18px;
+        bottom: max(env(safe-area-inset-bottom, 12px), 12px);
+        padding: 0 16px 8px 16px;
         justify-content: space-between;
         align-items: flex-end;
         pointer-events: none;
-        z-index: 9999;
+        z-index: 9995;
       }
 
-      body.is-touch-device #mobile-controls {
+      body.show-touch-pad #mobile-controls {
         display: flex;
       }
 
       .ctrl-cluster {
         display: flex;
-        gap: 12px;
+        gap: 10px;
         pointer-events: auto;
       }
 
@@ -52,97 +310,135 @@
       }
 
       .ctrl-btn {
-        width: 64px;
-        height: 64px;
+        width: 66px;
+        height: 66px;
         border-radius: 18px;
-        border: 2px solid rgba(0, 240, 255, 0.65);
-        background: rgba(12, 22, 46, 0.62);
-        backdrop-filter: blur(6px);
-        -webkit-backdrop-filter: blur(6px);
+        border: 3px solid #00f0ff;
+        background: linear-gradient(180deg, #172a5c 0%, #0b1533 100%);
+        box-shadow: 0 5px 0 #050a1a;
         color: #ffffff;
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
         font-size: 22px;
-        font-weight: 800;
+        font-weight: 900;
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        box-shadow: 0 4px 16px rgba(0, 240, 255, 0.22);
         cursor: pointer;
         touch-action: none;
-        user-select: none;
-        -webkit-user-select: none;
-        transition: transform 0.08s ease, background 0.08s ease, border-color 0.08s ease;
       }
 
       .ctrl-btn span.lbl {
         font-size: 10px;
-        font-weight: 700;
+        font-weight: 900;
         letter-spacing: 0.5px;
         color: #8fd3ff;
         margin-top: 2px;
       }
 
       .ctrl-btn.action-jump {
-        border-color: rgba(255, 215, 0, 0.8);
-        box-shadow: 0 4px 16px rgba(255, 215, 0, 0.25);
+        border-color: #ffd700;
+        background: linear-gradient(180deg, #ff9800 0%, #c65100 100%);
+      }
+
+      .ctrl-btn.action-jump span.lbl {
+        color: #fff8d6;
       }
 
       .ctrl-btn.action-slide {
-        border-color: rgba(255, 77, 109, 0.8);
-        box-shadow: 0 4px 16px rgba(255, 77, 109, 0.25);
+        border-color: #ff2a85;
+        background: linear-gradient(180deg, #e91e63 0%, #880e4f 100%);
+      }
+
+      .ctrl-btn.action-slide span.lbl {
+        color: #ffd6e7;
       }
 
       .ctrl-btn.active {
-        transform: scale(0.91);
-        background: rgba(0, 240, 255, 0.35);
-        border-color: #ffffff;
+        transform: translateY(4px) scale(0.95);
+        box-shadow: 0 1px 0 #050a1a;
+        filter: brightness(1.25);
       }
 
-      #swipe-hint {
-        display: none;
-        position: fixed;
-        top: 8px;
-        left: 50%;
-        transform: translateX(-50%);
-        background: rgba(10, 18, 38, 0.72);
-        border: 1px solid rgba(0, 240, 255, 0.4);
-        color: #bfe9ff;
-        padding: 4px 12px;
-        border-radius: 999px;
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-        font-size: 11px;
-        pointer-events: none;
-        z-index: 9998;
-        white-space: nowrap;
-      }
-
-      body.is-touch-device #swipe-hint {
-        display: block;
+      @media (max-width: 600px) {
+        .arcade-pill {
+          padding: 5px 9px;
+          font-size: 11px;
+        }
+        .arcade-pill.tour-badge span.hide-xs {
+          display: none;
+        }
       }
     </style>
   </head>
   <body>
-    <div id="swipe-hint">Vuốt màn hình (Trái / Phải / Lên / Xuống) hoặc bấm nút để điều khiển</div>
+    <!-- Thanh điều khiển Subway Surfers phía trên -->
+    <div id="subway-top-bar">
+      <div class="bar-group">
+        <div class="arcade-pill tour-badge">
+          🚇 <span>TOKYO</span><span class="hide-xs"> SURFERS</span>
+        </div>
+        <button type="button" id="perf-mode-btn" class="arcade-pill fps-pill" title="Chuyển chế độ đồ họa">
+          ⚡ <span id="fps-text">60 FPS</span> · <span id="perf-label">MƯỢT</span>
+        </button>
+      </div>
+      <div class="bar-group">
+        <button type="button" id="toggle-pad-btn" class="arcade-pill" title="Bật/Tắt nút điều khiển ảo">
+          🎮 NÚT ẢO
+        </button>
+        <button type="button" id="quick-pause-btn" class="arcade-pill pause-pill" title="Tạm dừng / Tiếp tục">
+          ⏸ TẠM DỪNG
+        </button>
+        <button type="button" id="fullscreen-btn" class="arcade-pill" title="Toàn màn hình">
+          ⛶
+        </button>
+      </div>
+    </div>
+
+    <!-- Thông báo thao tác vuốt tức thời -->
+    <div id="swipe-toast">▲ NHẢY LÊN!</div>
+
+    <!-- Sảnh chờ & Loading phong cách Subway Surfers -->
+    <div id="subway-splash">
+      <div class="splash-card">
+        <div class="world-tour-ribbon">★ WORLD TOUR : TOKYO NIGHT ★</div>
+        <h1 class="subway-logo-title">SUBWAY SURFERS<br>CRYSTAL RUN</h1>
+        <div class="subway-logo-sub">Phiên bản Siêu Mượt 60 FPS</div>
+
+        <div class="feature-grid">
+          <div class="feature-item">
+            <strong>👆 VUỐT NHẠY TỨC THÌ</strong>
+            Vuốt Trái / Phải / Lên / Xuống ở bất kỳ đâu trên màn hình.
+          </div>
+          <div class="feature-item">
+            <strong>🚄 NHẢY LÊN NÓC TÀU</strong>
+            Né tàu Shinkansen, nhảy qua rào & trượt chui gầm.
+          </div>
+          <div class="feature-item">
+            <strong>🛹 VÁN TRƯỢT & NAM CHÂM</strong>
+            Khiên bảo hộ chống va chạm, hút xu 3 làn & nhân đôi sao.
+          </div>
+          <div class="feature-item">
+            <strong>⚡ TỐI ƯU CHỐNG GIẬT LAG</strong>
+            Tự động cân chỉnh độ phân giải GPU giúp điện thoại chạy mượt.
+          </div>
+        </div>
+
+        <div id="loading-box">
+          <div class="progress-shell">
+            <div id="splash-progress-fill" class="progress-fill"></div>
+          </div>
+          <div id="splash-progress-text" class="progress-label">Đang nạp đường ray Tokyo... 10%</div>
+        </div>
+
+        <button type="button" id="play-now-btn">🏃 CHẠM ĐỂ CHẠY NGAY!</button>
+      </div>
+    </div>
 
     <div id="unity-container" class="unity-desktop">
       <div id="unity-fullscreen-container">
         <canvas id="unity-canvas" width="960" height="600" tabindex="-1"></canvas>
-        <div id="unity-loading-container">
-          <div id="unity-loading-bar">
-            <div id="unity-logo"></div>
-            <div id="unity-progress-bar-empty">
-              <div id="unity-progress-bar-full"></div>
-            </div>
-          </div>
-        </div>
       </div>
-      <div id="unity-warning"> </div>
-      <div id="unity-footer">
-        <div id="unity-logo-title-footer"></div>
-        <div id="unity-fullscreen-button"></div>
-        <div id="unity-build-title">Chạy Đua Tinh Thể</div>
-      </div>
+      <div id="unity-warning"></div>
     </div>
 
     <!-- Cụm nút điều khiển cảm ứng trên điện thoại -->
@@ -159,39 +455,60 @@
         <button type="button" class="ctrl-btn action-jump" data-dir="up" aria-label="Nhảy">
           ▲<span class="lbl">NHẢY</span>
         </button>
-        <button type="button" class="ctrl-btn action-slide" data-dir="down" aria-label="Trượt">
-          ▼<span class="lbl">TRƯỢT</span>
+        <button type="button" class="ctrl-btn action-slide" data-dir="down" aria-label="Lăn">
+          ▼<span class="lbl">LĂN</span>
         </button>
       </div>
     </div>
 
     <script>
-      let canvas = document.querySelector("#unity-canvas");
-      let fullscreenContainer = document.querySelector("#unity-fullscreen-container");
+      // 1. Chặn các log cảnh báo thiếu ký tự font TMP gây nghẽn luồng chính (Main Thread) trên trình duyệt di động
+      (function suppressNoisyUnityWarnings() {
+        const origWarn = console.warn;
+        console.warn = function(...args) {
+          if (args.length > 0 && typeof args[0] === "string") {
+            if (args[0].indexOf("LiberationSans SDF") !== -1 || args[0].indexOf("Unicode value") !== -1) {
+              return;
+            }
+          }
+          return origWarn.apply(console, args);
+        };
+      })();
+
+      const canvas = document.querySelector("#unity-canvas");
+      const splash = document.querySelector("#subway-splash");
+      const splashFill = document.querySelector("#splash-progress-fill");
+      const splashText = document.querySelector("#splash-progress-text");
+      const loadingBox = document.querySelector("#loading-box");
+      const playNowBtn = document.querySelector("#play-now-btn");
+      const swipeToast = document.querySelector("#swipe-toast");
       let unityAppInstance = null;
 
-      function unityShowBanner(msg, type) {
-        var warningBanner = document.querySelector("#unity-warning");
-        function updateBannerVisibility() {
-          warningBanner.style.display = warningBanner.children.length ? 'block' : 'none';
-        }
-        var div = document.createElement('div');
-        div.innerHTML = msg;
-        warningBanner.appendChild(div);
-        if (type == 'error') div.style = 'background: red; padding: 10px;';
-        else {
-          if (type == 'warning') div.style = 'background: yellow; padding: 10px;';
-          setTimeout(function() {
-            warningBanner.removeChild(div);
-            updateBannerVisibility();
-          }, 5000);
-        }
-        updateBannerVisibility();
+      const isMobileOrTouch = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ||
+        (navigator.maxTouchPoints && navigator.maxTouchPoints > 1);
+
+      if (isMobileOrTouch) {
+        document.body.classList.add("show-touch-pad");
       }
 
-      var buildUrl = "Build";
-      var loaderUrl = buildUrl + "/WebGLBuild.loader.js";
-      var config = {
+      // 2. Cấu hình độ phân giải thông minh chống lag tuyệt đối trên điện thoại
+      // Điện thoại thường có devicePixelRatio = 3 (gấp 9 lần số điểm ảnh). Đặt về 0.9 - 1.0 giúp GPU tăng tốc gấp 6-8 lần!
+      const PERF_MODES = [
+        { name: "SIÊU MƯỢT", dpr: isMobileOrTouch ? 0.82 : 1.0 },
+        { name: "MƯỢT",      dpr: isMobileOrTouch ? 1.0  : Math.min(window.devicePixelRatio || 1, 1.25) },
+        { name: "HD",        dpr: Math.min(window.devicePixelRatio || 1, 1.5) }
+      ];
+      let currentPerfIndex = isMobileOrTouch ? 0 : 1;
+
+      function unityShowBanner(msg, type) {
+        if (type === "error") {
+          console.error(msg);
+        }
+      }
+
+      const buildUrl = "Build";
+      const loaderUrl = buildUrl + "/WebGLBuild.loader.js";
+      const config = {
         arguments: [],
         dataUrl: buildUrl + "/WebGLBuild.data",
         frameworkUrl: buildUrl + "/WebGLBuild.framework.js",
@@ -200,37 +517,83 @@
         fullscreenElementID: "unity-fullscreen-container",
         companyName: "DefaultCompany",
         productName: "Game-unity-baongoc",
-        productVersion: "3.0.1",
+        productVersion: "4.0.0",
         showBanner: unityShowBanner,
+        devicePixelRatio: PERF_MODES[currentPerfIndex].dpr,
+        matchWebGLToCanvasSize: true,
+        webglContextAttributes: {
+          powerPreference: "high-performance",
+          antialias: !isMobileOrTouch,
+          preserveDrawingBuffer: false,
+          depth: true,
+          stencil: false
+        }
       };
 
-      var isMobileOrTouch = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || (navigator.maxTouchPoints && navigator.maxTouchPoints > 1);
+      // Cập nhật nút chế độ Mượt / HD
+      const perfLabel = document.querySelector("#perf-label");
+      const perfBtn = document.querySelector("#perf-mode-btn");
+      perfLabel.textContent = PERF_MODES[currentPerfIndex].name;
 
-      if (isMobileOrTouch) {
-        document.body.classList.add("is-touch-device");
-        document.querySelector("#unity-container").className = "unity-mobile";
-        canvas.className = "unity-mobile";
-        fullscreenContainer.style.width = "100%";
-        fullscreenContainer.style.height = "100%";
-        var footer = document.querySelector("#unity-footer");
-        if (footer) footer.style.display = "none";
+      perfBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        currentPerfIndex = (currentPerfIndex + 1) % PERF_MODES.length;
+        const mode = PERF_MODES[currentPerfIndex];
+        config.devicePixelRatio = mode.dpr;
+        perfLabel.textContent = mode.name;
+        window.dispatchEvent(new Event("resize"));
+      });
 
-        setTimeout(function() {
-          var hint = document.querySelector("#swipe-hint");
-          if (hint) hint.style.display = "none";
-        }, 8000);
-      } else {
-        fullscreenContainer.style.width = "960px";
-        fullscreenContainer.style.height = "600px";
+      // Bộ đo FPS thời gian thực & tự động hạ DPR nếu phát hiện máy yếu (< 42 FPS)
+      const fpsText = document.querySelector("#fps-text");
+      let frameCount = 0;
+      let lastFpsTime = performance.now();
+      let lowFpsStrikes = 0;
+
+      function monitorFps(now) {
+        frameCount++;
+        const elapsed = now - lastFpsTime;
+        if (elapsed >= 1000) {
+          const fps = Math.min(60, Math.round((frameCount * 1000) / elapsed));
+          fpsText.textContent = fps + " FPS";
+          if (fps < 42 && currentPerfIndex > 0) {
+            lowFpsStrikes++;
+            if (lowFpsStrikes >= 2) {
+              currentPerfIndex = 0;
+              config.devicePixelRatio = PERF_MODES[0].dpr;
+              perfLabel.textContent = PERF_MODES[0].name;
+              window.dispatchEvent(new Event("resize"));
+              lowFpsStrikes = 0;
+            }
+          } else {
+            lowFpsStrikes = 0;
+          }
+          frameCount = 0;
+          lastFpsTime = now;
+        }
+        requestAnimationFrame(monitorFps);
       }
+      requestAnimationFrame(monitorFps);
 
-      // === HỆ THỐNG ĐIỀU KHIỂN CẢM ỨNG & VUỐT MÀN HÌNH (SUBWAY SURFERS STYLE) ===
+      // 3. Hệ thống điều khiển cảm ứng & vuốt màn hình Subway Surfers (<16ms phản hồi)
       const KEY_MAP = {
-        left:  { key: "ArrowLeft",  code: "ArrowLeft",  keyCode: 37 },
-        right: { key: "ArrowRight", code: "ArrowRight", keyCode: 39 },
-        up:    { key: "ArrowUp",    code: "ArrowUp",    keyCode: 38 },
-        down:  { key: "ArrowDown",  code: "ArrowDown",  keyCode: 40 }
+        left:  { key: "ArrowLeft",  code: "ArrowLeft",  keyCode: 37, label: "◀ TRÁI" },
+        right: { key: "ArrowRight", code: "ArrowRight", keyCode: 39, label: "PHẢI ▶" },
+        up:    { key: "ArrowUp",    code: "ArrowUp",    keyCode: 38, label: "▲ NHẢY" },
+        down:  { key: "ArrowDown",  code: "ArrowDown",  keyCode: 40, label: "▼ LĂN" },
+        pause: { key: "Escape",     code: "Escape",     keyCode: 27, label: "⏸ TẠM DỪNG" }
       };
+
+      let toastTimer = null;
+      function showSwipeToast(text) {
+        if (!swipeToast) return;
+        swipeToast.textContent = text;
+        swipeToast.classList.add("show");
+        if (toastTimer) clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => {
+          swipeToast.classList.remove("show");
+        }, 380);
+      }
 
       function dispatchUnityKeyEvent(type, keyInfo) {
         try {
@@ -248,23 +611,42 @@
           Object.defineProperty(evt, "keyCode", { get: () => keyInfo.keyCode });
           Object.defineProperty(evt, "which", { get: () => keyInfo.keyCode });
           canvas.dispatchEvent(evt);
-        } catch (err) {
-          console.warn("Key dispatch error:", err);
-        }
+          window.dispatchEvent(evt);
+        } catch (err) {}
       }
 
       function triggerDirection(dir) {
         const keyInfo = KEY_MAP[dir];
         if (!keyInfo) return;
-
-        // 1. Phát sự kiện phím bấm chuẩn cho Unity Input System (Keyboard.current)
+        canvas.focus();
+        showSwipeToast(keyInfo.label);
         dispatchUnityKeyEvent("keydown", keyInfo);
         setTimeout(() => {
           dispatchUnityKeyEvent("keyup", keyInfo);
-        }, 65);
+        }, 55);
       }
 
-      // Gắn sự kiện cho các nút bấm ảo trên màn hình
+      // Nút trên thanh Top Bar
+      document.querySelector("#toggle-pad-btn").addEventListener("click", (e) => {
+        e.stopPropagation();
+        document.body.classList.toggle("show-touch-pad");
+      });
+
+      document.querySelector("#quick-pause-btn").addEventListener("click", (e) => {
+        e.stopPropagation();
+        triggerDirection("pause");
+      });
+
+      document.querySelector("#fullscreen-btn").addEventListener("click", (e) => {
+        e.stopPropagation();
+        if (unityAppInstance) {
+          unityAppInstance.SetFullscreen(1);
+        } else if (document.documentElement.requestFullscreen) {
+          document.documentElement.requestFullscreen();
+        }
+      });
+
+      // Nút bấm ảo góc dưới màn hình
       document.querySelectorAll(".ctrl-btn").forEach((btn) => {
         const dir = btn.getAttribute("data-dir");
         const onPress = (e) => {
@@ -286,14 +668,19 @@
         btn.addEventListener("mouseleave", onRelease);
       });
 
-      // Nhận diện thao tác vuốt (Swipe) trực tiếp trên toàn màn hình
+      // Nhận diện thao tác vuốt (Swipe) trực tiếp trên toàn màn hình với độ nhạy cao (20px)
       let touchStartX = 0;
       let touchStartY = 0;
       let swipeHandled = false;
-      const SWIPE_THRESHOLD_PX = 26;
+      const SWIPE_THRESHOLD_PX = 20;
+
+      function isUIElement(target) {
+        return target && target.closest &&
+          (target.closest("#mobile-controls") || target.closest("#subway-top-bar") || target.closest("#subway-splash"));
+      }
 
       document.addEventListener("touchstart", (e) => {
-        if (e.target && e.target.closest && e.target.closest("#mobile-controls")) return;
+        if (isUIElement(e.target)) return;
         if (e.touches && e.touches.length > 0) {
           touchStartX = e.touches[0].clientX;
           touchStartY = e.touches[0].clientY;
@@ -302,7 +689,7 @@
       }, { passive: true });
 
       document.addEventListener("touchmove", (e) => {
-        if (e.target && e.target.closest && e.target.closest("#mobile-controls")) return;
+        if (isUIElement(e.target)) return;
         if (!e.touches || e.touches.length === 0) return;
 
         const dx = e.touches[0].clientX - touchStartX;
@@ -319,13 +706,13 @@
       }, { passive: true });
 
       document.addEventListener("touchend", (e) => {
-        if (e.target && e.target.closest && e.target.closest("#mobile-controls")) return;
+        if (isUIElement(e.target)) return;
         if (swipeHandled || !e.changedTouches || e.changedTouches.length === 0) return;
 
         const dx = e.changedTouches[0].clientX - touchStartX;
         const dy = e.changedTouches[0].clientY - touchStartY;
 
-        if (Math.abs(dx) >= 18 || Math.abs(dy) >= 18) {
+        if (Math.abs(dx) >= 14 || Math.abs(dy) >= 14) {
           swipeHandled = true;
           if (Math.abs(dx) > Math.abs(dy)) {
             triggerDirection(dx < 0 ? "left" : "right");
@@ -335,29 +722,26 @@
         }
       }, { passive: true });
 
-      var script = document.createElement("script");
+      // Đóng màn hình sảnh chờ khi bấm nút Chạy Ngay
+      playNowBtn.addEventListener("click", () => {
+        splash.classList.add("hidden");
+        canvas.focus();
+      });
+
+      // 4. Khởi tạo Unity WebGL Instance
+      const script = document.createElement("script");
       script.src = loaderUrl;
       script.onload = () => {
-        const loadingContainer = document.querySelector("#unity-loading-container");
-        const progressBarFull = document.querySelector("#unity-progress-bar-full");
-
         createUnityInstance(canvas, config, (progress) => {
-          if (progress < 1) {
-            loadingContainer.style.display = "block";
-            progressBarFull.style.width = 100 * progress + "%";
-          } else {
-            loadingContainer.style.display = "none";
-          }
+          const pct = Math.min(100, Math.max(5, Math.round(progress * 100)));
+          splashFill.style.width = pct + "%";
+          splashText.textContent = "Đang nạp đường ray Tokyo... " + pct + "%";
         }).then((unityInstance) => {
           unityAppInstance = unityInstance;
-          var fsBtn = document.querySelector("#unity-fullscreen-button");
-          if (fsBtn) {
-            fsBtn.onclick = () => {
-              unityInstance.SetFullscreen(1);
-            };
-          }
+          loadingBox.style.display = "none";
+          playNowBtn.style.display = "block";
         }).catch((message) => {
-          alert(message);
+          splashText.textContent = "Lỗi tải game: " + message;
         });
       };
 

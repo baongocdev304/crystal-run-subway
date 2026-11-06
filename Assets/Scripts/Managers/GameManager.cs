@@ -50,8 +50,8 @@ namespace CrystalRun
         [SerializeField] private PowerUpManager powerUpManager;
 
         [Header("=== Cài đặt Khởi động ===")]
-        [Tooltip("Tự động bắt đầu chơi ngay khi tải màn (tiện cho test gameplay trực tiếp)")]
-        [SerializeField] private bool autoStartGame = true;
+        [Tooltip("Tự động bắt đầu chơi ngay khi tải màn (để false để hiện màn hình chính Subway Surfers)")]
+        [SerializeField] private bool autoStartGame = false;
 
         #region Events
 
@@ -89,8 +89,9 @@ namespace CrystalRun
             }
             Instance = this;
 
-            // Đảm bảo Time.timeScale luôn được phục hồi về 1 khi Awake
+            // Đảm bảo Time.timeScale luôn được phục hồi về 1 khi Awake và khóa mục tiêu 60 FPS mượt mà
             Time.timeScale = 1.0f;
+            Application.targetFrameRate = 60;
 
             FindComponentReferences();
         }
