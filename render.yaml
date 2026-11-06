@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: crystal-run-subway-tokyo
+    runtime: static
+    buildCommand: echo "Unity WebGL Static Build Ready"
+    staticPublishPath: ./WebGLBuild
+    headers:
+      - path: /Build/*.wasm
+        name: Content-Type
+        value: application/wasm
+      - path: /*
+        name: Cross-Origin-Opener-Policy
+        value: same-origin
+      - path: /*
+        name: Cross-Origin-Embedder-Policy
+        value: require-corp
+

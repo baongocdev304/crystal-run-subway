@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b82c7639f182f4673a0515673b404e89, type: 3}
+  m_Name: GameConfig
+  m_EditorClassIdentifier: Assembly-CSharp::CrystalRun.GameConfig
+  initialSpeed: 10
+  maxSpeed: 25
+  speedIncreaseDistanceInterval: 500
+  speedIncreaseAmount: 1
+  laneDistance: 2.5
+  laneChangeSpeed: 15
+  jumpForce: 8.5
+  gravity: -24
+  slideDuration: 0.8
+  slideColliderHeight: 0.6
+  normalColliderHeight: 1.8
+  initialLives: 3
+  maxLives: 5
+  invincibilityDuration: 2
+  invincibilityBlinkRate: 0.1
+  coinScore: 10
+  crystalScore: 50
+  crystalsToHeal: 10
+  shieldDuration: 8
+  magnetDuration: 8
+  doubleScoreDuration: 10
+  magnetRadius: 7
+  magnetPullSpeed: 18
+  stage2DistanceThreshold: 500
+  stage3DistanceThreshold: 1500

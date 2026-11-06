@@ -7,6 +7,12 @@ TagManager:
   - Crate
   - Dirt
   - CinemachineTarget
+  - Player
+  - Coin
+  - Crystal
+  - PowerUp
+  - Obstacle
+  - Pit
   layers:
   - Default
   - TransparentFX
@@ -16,9 +22,9 @@ TagManager:
   - UI
   - 
   - 
-  - 
-  - 
-  - 
+  - Player
+  - Obstacle
+  - Ground
   - 
   - 
   - 
@@ -53,3 +59,4 @@ TagManager:
   - Light Layer 5
   - Light Layer 6
   - Light Layer 7
+  m_MigratedRenderPipelines: []
