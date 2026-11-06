@@ -197,10 +197,22 @@ namespace CrystalRun
 
         #region Xử lý Input
 
+        // Trạng thái nhận diện thao tác vuốt cảm ứng (Touch Swipe)
+        private Vector2 touchStartPos;
+        private bool isTrackingTouch;
+        private bool touchSwipeConsumed;
+        private const float MinSwipeDistancePixels = 35f;
+
         /// <summary>
-        /// Đọc input từ Unity Input System mới (Keyboard.current).
+        /// Đọc input từ Unity Input System mới (Keyboard.current &amp; Touchscreen.current).
         /// </summary>
         private void HandleInput()
+        {
+            HandleKeyboardInput();
+            HandleTouchSwipeInput();
+        }
+
+        private void HandleKeyboardInput()
         {
             Keyboard keyboard = Keyboard.current;
             if (keyboard == null) return;
@@ -227,6 +239,86 @@ namespace CrystalRun
             {
                 SlideOrFastFall();
             }
+        }
+
+        /// <summary>
+        /// Nhận diện vuốt màn hình cảm ứng (Trái / Phải / Lên / Xuống) trên điện thoại.
+        /// </summary>
+        private void HandleTouchSwipeInput()
+        {
+            Touchscreen touchscreen = Touchscreen.current;
+            if (touchscreen == null) return;
+
+            var primaryTouch = touchscreen.primaryTouch;
+            if (primaryTouch.press.wasPressedThisFrame)
+            {
+                touchStartPos = primaryTouch.position.ReadValue();
+                isTrackingTouch = true;
+                touchSwipeConsumed = false;
+            }
+            else if (isTrackingTouch && primaryTouch.press.isPressed && !touchSwipeConsumed)
+            {
+                Vector2 currentPos = primaryTouch.position.ReadValue();
+                Vector2 delta = currentPos - touchStartPos;
+                if (delta.magnitude >= MinSwipeDistancePixels)
+                {
+                    touchSwipeConsumed = true;
+                    ExecuteSwipeDelta(delta);
+                }
+            }
+            else if (isTrackingTouch && primaryTouch.press.wasReleasedThisFrame)
+            {
+                if (!touchSwipeConsumed)
+                {
+                    Vector2 endPos = primaryTouch.position.ReadValue();
+                    Vector2 delta = endPos - touchStartPos;
+                    if (delta.magnitude >= MinSwipeDistancePixels * 0.6f)
+                    {
+                        ExecuteSwipeDelta(delta);
+                    }
+                }
+                isTrackingTouch = false;
+                touchSwipeConsumed = false;
+            }
+        }
+
+        private void ExecuteSwipeDelta(Vector2 delta)
+        {
+            if (Mathf.Abs(delta.x) > Mathf.Abs(delta.y))
+            {
+                ChangeLane(delta.x < 0f ? -1 : 1);
+            }
+            else
+            {
+                if (delta.y > 0f)
+                {
+                    Jump();
+                }
+                else
+                {
+                    SlideOrFastFall();
+                }
+            }
+        }
+
+        public void SwipeLeft()
+        {
+            if (CanProcessInput()) ChangeLane(-1);
+        }
+
+        public void SwipeRight()
+        {
+            if (CanProcessInput()) ChangeLane(1);
+        }
+
+        public void SwipeUp()
+        {
+            if (CanProcessInput()) Jump();
+        }
+
+        public void SwipeDown()
+        {
+            if (CanProcessInput()) SlideOrFastFall();
         }
 
         /// <summary>
