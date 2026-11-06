@@ -1640,6 +1640,18 @@ namespace CrystalRun.Editor
             string outputPath = "WebGLBuild";
             EnsureDirectory(outputPath);
 
+            // Sao lưu giao diện Subway Surfers tùy chỉnh trong index.html trước khi Unity ghi đè
+            string indexPath = Path.Combine(outputPath, "index.html");
+            string customIndexBackup = null;
+            if (File.Exists(indexPath))
+            {
+                string existingHtml = File.ReadAllText(indexPath);
+                if (existingHtml.Contains("subway-splash"))
+                {
+                    customIndexBackup = existingHtml;
+                }
+            }
+
             BuildPlayerOptions buildOptions = new BuildPlayerOptions
             {
                 scenes = new string[] { scenePath },
@@ -1651,6 +1663,20 @@ namespace CrystalRun.Editor
             var report = BuildPipeline.BuildPlayer(buildOptions);
             if (report.summary.result == UnityEditor.Build.Reporting.BuildResult.Succeeded)
             {
+                // Khôi phục giao diện Subway Surfers & vá loader.js hỗ trợ cảm ứng di động
+                if (!string.IsNullOrEmpty(customIndexBackup))
+                {
+                    File.WriteAllText(indexPath, customIndexBackup);
+                }
+
+                string loaderPath = Path.Combine(outputPath, "Build", "WebGLBuild.loader.js");
+                if (File.Exists(loaderPath))
+                {
+                    string loaderCode = File.ReadAllText(loaderPath);
+                    loaderCode = loaderCode.Replace("mobile:e(\"iPhone|iPad|iPod|Android\")", "mobile:!1");
+                    File.WriteAllText(loaderPath, loaderCode);
+                }
+
                 Debug.Log($"[CrystalRunBuilder] Đã xuất bản WebGL thành công tại thư mục '{outputPath}/'!");
                 if (!Application.isBatchMode)
                 {
