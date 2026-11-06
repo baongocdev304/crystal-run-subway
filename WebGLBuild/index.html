@@ -370,34 +370,47 @@
         filter: brightness(1.25);
       }
 
-      @media (max-width: 600px) {
-        .arcade-pill {
-          padding: 5px 9px;
-          font-size: 11px;
+      @media (max-width: 960px) {
+        #subway-top-bar {
+          gap: 4px;
+          top: max(env(safe-area-inset-top, 6px), 6px);
         }
-        .arcade-pill.tour-badge span.hide-xs {
-          display: none;
+        .bar-group {
+          gap: 4px;
+        }
+        .arcade-pill {
+          padding: 4px 7px;
+          font-size: 10px;
+          border-width: 2px;
+          gap: 3px;
+        }
+        .arcade-pill.tour-badge,
+        .hide-mobile {
+          display: none !important;
         }
       }
     </style>
   </head>
   <body>
-    <!-- Thanh điều khiển Subway Surfers phía trên -->
+    <!-- Thanh điều khiển Subway Surfers phía trên (Căn giữa gọn gàng, không che HUD hai bên) -->
     <div id="subway-top-bar">
       <div class="bar-group">
         <div class="arcade-pill tour-badge">
-          🚇 <span>TOKYO</span><span class="hide-xs"> SURFERS</span>
+          🚇 <span>TOKYO SURFERS</span>
         </div>
         <button type="button" id="perf-mode-btn" class="arcade-pill fps-pill" title="Chuyển chế độ đồ họa">
-          ⚡ <span id="fps-text">60 FPS</span> · <span id="perf-label">MƯỢT</span>
+          ⚡ <span id="fps-text">60 FPS</span><span class="hide-mobile"> · </span><span id="perf-label" class="hide-mobile">MƯỢT</span>
         </button>
       </div>
       <div class="bar-group">
         <button type="button" id="toggle-pad-btn" class="arcade-pill" title="Bật/Tắt nút điều khiển ảo">
-          🎮 NÚT ẢO
+          🎮<span class="hide-mobile"> NÚT ẢO</span>
         </button>
         <button type="button" id="quick-pause-btn" class="arcade-pill pause-pill" title="Tạm dừng / Tiếp tục">
-          ⏸ TẠM DỪNG
+          ⏸<span class="hide-mobile"> TẠM DỪNG</span>
+        </button>
+        <button type="button" id="quick-restart-btn" class="arcade-pill" title="Chơi lại ngay">
+          🔄<span class="hide-mobile"> CHƠI LẠI</span>
         </button>
         <button type="button" id="fullscreen-btn" class="arcade-pill" title="Toàn màn hình">
           ⛶
@@ -473,9 +486,20 @@
     </div>
 
     <script>
-      // 1. Chặn các log cảnh báo thiếu ký tự font TMP gây nghẽn luồng chính (Main Thread) trên trình duyệt di động
-      (function suppressNoisyUnityWarnings() {
+      // 1. Chặn các log cảnh báo thiếu ký tự font TMP & nhận diện thời điểm Scene Main.unity nạp xong 100%
+      let unitySceneReady = false;
+      let pendingAutoStart = false;
+
+      function triggerUnityStartGame() {
+        if (!window.unityAppInstance) return;
+        try {
+          window.unityAppInstance.SendMessage("Managers", "StartGame");
+        } catch (err) {}
+      }
+
+      (function hookUnityConsole() {
         const origWarn = console.warn;
+        const origLog = console.log;
         console.warn = function(...args) {
           if (args.length > 0 && typeof args[0] === "string") {
             if (args[0].indexOf("LiberationSans SDF") !== -1 || args[0].indexOf("Unicode value") !== -1) {
@@ -483,6 +507,25 @@
             }
           }
           return origWarn.apply(console, args);
+        };
+        console.log = function(...args) {
+          if (!unitySceneReady && args.length > 0 && typeof args[0] === "string") {
+            if (args[0].indexOf("Unloading ") !== -1 && args[0].indexOf("unused Assets") !== -1) {
+              setTimeout(() => {
+                unitySceneReady = true;
+                window.unitySceneReady = true;
+                const lBox = document.querySelector("#loading-box");
+                const pBtn = document.querySelector("#play-now-btn");
+                if (lBox) lBox.style.display = "none";
+                if (pBtn) pBtn.style.display = "block";
+                if (pendingAutoStart) {
+                  pendingAutoStart = false;
+                  triggerUnityStartGame();
+                }
+              }, 180);
+            }
+          }
+          return origLog.apply(console, args);
         };
       })();
 
@@ -540,6 +583,7 @@
           stencil: false
         }
       };
+      window.config = config;
 
       // Cập nhật nút chế độ Mượt / HD
       const perfLabel = document.querySelector("#perf-label");
@@ -648,6 +692,17 @@
         triggerDirection("pause");
       });
 
+      document.querySelector("#quick-restart-btn").addEventListener("click", (e) => {
+        e.stopPropagation();
+        if (unityAppInstance) {
+          try {
+            unityAppInstance.SendMessage("Managers", "RestartGame");
+            showSwipeToast("🔄 CHƠI LẠI!");
+          } catch (err) {}
+        }
+        canvas.focus();
+      });
+
       document.querySelector("#fullscreen-btn").addEventListener("click", (e) => {
         e.stopPropagation();
         if (unityAppInstance) {
@@ -733,9 +788,15 @@
         }
       }, { passive: true });
 
-      // Đóng màn hình sảnh chờ khi bấm nút Chạy Ngay
+      // Đóng màn hình sảnh chờ và bắt đầu chạy ngay lập tức khi bấm nút Chạy Ngay (1-Tap Play)
       playNowBtn.addEventListener("click", () => {
         splash.classList.add("hidden");
+        if (unitySceneReady) {
+          triggerUnityStartGame();
+        } else {
+          pendingAutoStart = true;
+          triggerUnityStartGame();
+        }
         canvas.focus();
       });
 
@@ -746,11 +807,25 @@
         createUnityInstance(canvas, config, (progress) => {
           const pct = Math.min(100, Math.max(5, Math.round(progress * 100)));
           splashFill.style.width = pct + "%";
-          splashText.textContent = "Đang nạp đường ray Tokyo... " + pct + "%";
+          splashText.textContent = pct < 100
+            ? "Đang nạp đường ray Tokyo... " + pct + "%"
+            : "Đang khởi động tàu cao tốc Shinkansen...";
         }).then((unityInstance) => {
           unityAppInstance = unityInstance;
-          loadingBox.style.display = "none";
-          playNowBtn.style.display = "block";
+          window.unityAppInstance = unityInstance;
+          // Dự phòng mở nút sau 2.4s nếu log bị tắt
+          setTimeout(() => {
+            if (!unitySceneReady) {
+              unitySceneReady = true;
+              window.unitySceneReady = true;
+              loadingBox.style.display = "none";
+              playNowBtn.style.display = "block";
+              if (pendingAutoStart) {
+                pendingAutoStart = false;
+                triggerUnityStartGame();
+              }
+            }
+          }, 2400);
         }).catch((message) => {
           splashText.textContent = "Lỗi tải game: " + message;
         });

@@ -74,6 +74,12 @@ namespace CrystalRun.UI
             }
             Instance = this;
 
+            CanvasScaler scaler = GetComponent<CanvasScaler>();
+            if (scaler != null)
+            {
+                scaler.matchWidthOrHeight = 0.5f;
+            }
+
             SetupButtonListeners();
         }
 
@@ -253,7 +259,7 @@ namespace CrystalRun.UI
             lastCoins = coins;
             if (coinsText != null)
             {
-                coinsText.text = $"{coins}";
+                coinsText.text = $"XU: {coins}";
             }
         }
 
@@ -274,7 +280,7 @@ namespace CrystalRun.UI
             lastCrystalTarget = target;
             if (crystalsText != null)
             {
-                crystalsText.text = $"{current}/{target}";
+                crystalsText.text = $"TINH THE: {current}/{target}";
             }
         }
 
